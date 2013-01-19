@@ -121,7 +121,33 @@ class AppleUpdates(object):
     def __init__(self):
         self._managed_install_dir = munkicommon.pref('ManagedInstallDir')
 
-        self.cache_dir = os.path.join(self._managed_install_dir, 'swupd')
+        real_cache_dir = os.path.join(self._managed_install_dir, 'swupd')
+        if os.path.exists(real_cache_dir):
+            if not os.path.isdir(real_cache_dir):
+                munkicommon.display_error(
+                    '%s exists but is not a dir.', real_cache_dir)
+        else:
+            os.mkdir(real_cache_dir)
+
+        # symlink to work around an issue with paths containing spaces
+        # in 10.8.2's SoftwareUpdate
+        self.cache_dir = os.path.join('/tmp', 'munki_swupd_cache')
+        try:
+            if os.path.islink(self.cache_dir):
+                # remove any pre-existing symlink
+                os.unlink(self.cache_dir)
+            if os.path.exists(self.cache_dir):
+                # there should not be a file or directory at that path!
+                # move it
+                new_name = os.path.join('/tmp',
+                    ('munki_swupd_cache_moved_%s' %
+                        time.strftime('%Y.%m.%d.%H.%M.%S')))
+                os.rename(self.cache_dir, new_name)
+            os.symlink(real_cache_dir, self.cache_dir)
+        except (OSError, IOError), err:
+            # error in setting up the cache directories
+            raise Error('Could not configure cache directory: %s' % err)
+
         self.temp_cache_dir = os.path.join(self.cache_dir, 'mirror')
         self.local_catalog_dir = os.path.join(
             self.cache_dir, LOCAL_CATALOG_DIR_REL_PATH)
@@ -295,6 +321,12 @@ class AppleUpdates(object):
                         product_key)
                     self.RetrieveURLToCacheDir(
                         package['MetadataURL'], copy_only_if_missing=True)
+                #if 'URL' in package:
+                #    munkicommon.display_status_minor(
+                #        'Caching package for product ID %s',
+                #        product_key)
+                #    self.RetrieveURLToCacheDir(
+                #        package['URL'], copy_only_if_missing=True)
 
             distributions = product['Distributions']
             for dist_lang in distributions.keys():
@@ -304,8 +336,13 @@ class AppleUpdates(object):
                     'Caching %s distribution for product ID %s',
                     dist_lang, product_key)
                 dist_url = distributions[dist_lang]
-                self.RetrieveURLToCacheDir(
-                    dist_url, copy_only_if_missing=True)
+                try:
+                    self.RetrieveURLToCacheDir(
+                        dist_url, copy_only_if_missing=True)
+                except ReplicationError:
+                    munkicommon.display_warning(
+                        'Could not cache %s distribution for product ID %s',
+                        dist_lang, product_key)
 
         if munkicommon.stopRequested():
             return
@@ -354,7 +391,7 @@ class AppleUpdates(object):
         return list_of_localizations[0]
 
     def GetDistributionForProductKey(self, product_key):
-        '''Returns the path to a distibution file from the local cache for the 
+        '''Returns the path to a distibution file from the local cache for the
         given product_key.'''
         try:
             catalog = FoundationPlist.readPlist(self.local_catalog_path)
@@ -384,7 +421,7 @@ class AppleUpdates(object):
 
         try:
             dom = minidom.parse(distfile)
-        except expat.ExpatError:
+        except (expat.ExpatError, IOError):
             return []
 
         must_close_app_ids = []
@@ -1087,7 +1124,7 @@ class AppleUpdates(object):
             last_result_code = self.GetSoftwareUpdatePref('LastResultCode') or 0
             if last_result_code > 2:
                 retcode = last_result_code
-            
+
             if results['failures']:
                 return 1
 
