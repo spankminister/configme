@@ -39,21 +39,6 @@ AUTOINSTDIR = os.path.join(APPDIR, "autoinstall")
 #AUTOINSTDIR = os.path.join(APPDIR, "autoinstall")
 # ==============================================================
 
-"""
-TODO:
-* Set USE flags! wget NEEDS SSL support compiled in to not suck!
-* Modify path in .bash_profile to include the new PATH with emerge, etc.
-* bashrc, vimrc, screenrc
-* Copy over ssh_hosts to remove warnings for trusted servers (only really one)
-* Delete the Gentoo Prefix tmp directory, switch to bootstrapped one
-* Font installation
-* Terminal, etc. app preferences
-* Command line stuff to enable/disable each installation step.
-* Permissions fuck up on installing Quicksilver, which needs to have Info.plist
-  user-writable to disable showing in the Dock.
-* Change subprocess to use STDOUT, etc.
-"""
-
 def signal_handler(signal, frame):
     print "Caught CTRL+C, aborting."
     sys.exit(0)
