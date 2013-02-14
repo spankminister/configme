@@ -32,7 +32,10 @@ APPDIR:
             someapplication1.dmg
         someapp2/
             someapplication2.mpkg
+    profiles/
+        dot.bashrc
+        dot.irssi/
 
-Then, run 'python install.py'
+Then, run 'sudo python install.py && python install.py'
 
 ===================================================

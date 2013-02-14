@@ -12,6 +12,7 @@ import glob
 
 import util
 import util.gentoo
+import util.profiles
 
 VERBOSE = False
 
@@ -33,10 +34,13 @@ PORTS = [   "nmap",
             "irssi",    ]
 
                    
-# Set to the directory with all the apps you want installed
+# Set to the base directory with all the apps/profiles you want installed
 APPDIR = "/Volumes/apps/OSX/"
+
+# ========== END CONFIG SECTION ========================
 AUTOINSTDIR = os.path.join(APPDIR, "autoinstall")
-#AUTOINSTDIR = os.path.join(APPDIR, "autoinstall")
+PROFILEDIR = os.path.join(APPDIR, "profiles")
+PORTAGEDIR = os.path.join(os.getenv("HOME"),"Gentoo")
 # ==============================================================
 
 def signal_handler(signal, frame):
@@ -127,11 +131,12 @@ def main(argv = sys.argv):
         # Install Gentoo Prefix
         print "##### Running as user TODO #####"
         print "* Bootstrapping Gentoo Prefix"
-        util.gentoo.bootstrapGentooPrefix()
+        #util.gentoo.bootstrapGentooPrefix(PORTAGEDIR)
+
+        # Copy and install appropriate profiles
+        util.profiles.setupProfiles(PROFILEDIR,PORTAGEDIR)
         return
         #FIXME: Remove return above
-
-
 
 if __name__ == '__main__':
     sys.exit(main())
