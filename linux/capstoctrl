@@ -1,4 +1,4 @@
 #!/bin/bash
 sed -e s/^XKBOPTIONS.*/XKBOPTIONS="lv3:ralt_alt,compose:menu,ctrl:nocaps"/ /etc/default/keyboard > /tmp/tmp_keyboard
-mv /tmp/tmp_keyboard /etc/default/keyboard
+sudo mv /tmp/tmp_keyboard /etc/default/keyboard
 sudo dpkg-reconfigure keyboard-configuration
